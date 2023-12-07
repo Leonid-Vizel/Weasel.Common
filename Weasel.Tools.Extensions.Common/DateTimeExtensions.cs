@@ -22,6 +22,16 @@ public static class DateTimeExtensions
         => time == null ? null : time.Value.ToDateTime();
     public static DateTime ToDateTime(this TimeOnly time)
         => new DateTime(1, 1, 1, time.Hour, time.Minute, time.Second);
+    public static DateOnly GetNextWeekday(this DateOnly start, DayOfWeek day)
+    {
+        int daysToAdd = ((int)day - (int)start.DayOfWeek + 7) % 7;
+        return start.AddDays(daysToAdd);
+    }
+    public static DateTime GetNextWeekday(this DateTime start, DayOfWeek day)
+    {
+        int daysToAdd = ((int)day - (int)start.DayOfWeek + 7) % 7;
+        return start.AddDays(daysToAdd);
+    }
     public static int Age(this DateTime birthDate, DateTime laterDate)
     {
         int age;
