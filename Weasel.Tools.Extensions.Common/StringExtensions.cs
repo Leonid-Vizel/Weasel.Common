@@ -21,6 +21,8 @@ public static class StringExtensions
         int index = name.LastIndexOf(".") + 1;
         return index == 0 || index >= name.Length ? name : name.Substring(index);
     }
+    public static string ClearSpaces(this string value)
+        => new Regex("[ ]{2,}", RegexOptions.None).Replace(value, " ").Trim();
     public static string Crop(this string value, int lengthWithEndCharacters, string? endCharacters = "...")
     {
         if (value.Length <= lengthWithEndCharacters)
