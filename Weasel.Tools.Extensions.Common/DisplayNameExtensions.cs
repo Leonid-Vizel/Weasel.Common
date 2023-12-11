@@ -20,30 +20,56 @@ public static class DisplayNameExtensions
 {
     private static ConcurrentDictionary<Enum, string?> _enumNamesData;
     private static ConcurrentDictionary<Enum, string[]?> _enumGroupingsData;
+    private static ConcurrentDictionary<Type, bool> _enumFlagData;
     private static ConcurrentDictionary<(Type, string), string?> _propertyNamesData;
     private static ConcurrentDictionary<Type, string?> _typeNamesData;
     static DisplayNameExtensions()
     {
         _enumNamesData = new ConcurrentDictionary<Enum, string?>();
         _enumGroupingsData = new ConcurrentDictionary<Enum, string[]?>();
+        _enumFlagData = new ConcurrentDictionary<Type, bool>();
         _propertyNamesData = new ConcurrentDictionary<(Type, string), string?>();
         _typeNamesData = new ConcurrentDictionary<Type, string?>();
     }
 
     #region Enums
-    public static string? GetDisplayName(this Enum enumValue)
+    public static string? GetDisplayName(this Enum enumValue, string separator = ", ")
+    {
+        var type = enumValue.GetType();
+        if (!CheckEnumIsFlag(type))
+        {
+            return enumValue.GetFirstDisplayName(type);
+        }
+        return string.Join(separator, Enum.GetValues(type).Cast<Enum>().Where(enumValue.HasFlag).Select(x => x.GetFirstDisplayName(type)));
+    }
+
+    public static string? GetFirstDisplayName(this Enum enumValue)
+        => enumValue.GetFirstDisplayName(enumValue.GetType());
+
+    public static string? GetFirstDisplayName(this Enum enumValue, Type type)
     {
         if (!_enumNamesData.TryGetValue(enumValue, out var result))
         {
-            result = enumValue.GetType()
-                        .GetMember(enumValue.ToString())
-                        .FirstOrDefault(x=>x.DeclaringType?.IsEnum ?? false)?
-                        .GetCustomAttribute<DisplayAttribute>()?
-                        .GetName();
+            var preResult = type.GetMember(enumValue.ToString()).FirstOrDefault(x => x.DeclaringType?.IsEnum ?? false);
+            result = preResult?.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? preResult?.Name;
             _enumNamesData.TryAdd(enumValue, result);
         }
         return result;
     }
+
+    public static bool CheckEnumIsFlag(Type type)
+    {
+        if (!_enumFlagData.TryGetValue(type, out bool isFlag))
+        {
+            isFlag = type.GetCustomAttribute<FlagsAttribute>() != null;
+            _enumFlagData.TryAdd(type, isFlag);
+        }
+        return isFlag;
+    }
+
+    public static bool CheckEnumIsFlag(this Enum enumValue)
+        => CheckEnumIsFlag(enumValue.GetType());
+
     public static string[]? GetGroupings(this Enum enumValue)
     {
         if (!_enumGroupingsData.TryGetValue(enumValue, out var result))
