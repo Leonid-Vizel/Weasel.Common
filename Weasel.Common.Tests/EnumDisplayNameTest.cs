@@ -62,6 +62,50 @@ public class EnumDisplayNameTest
     }
 
     [TestMethod]
+    public void FirstDisplayForStandardEnum_1()
+    {
+        var test = StandardEnum.One;
+        var result = test.GetFirstDisplayName();
+        if (result != "CHECK 1")
+        {
+            throw new Exception($"WRONG! ({result})");
+        }
+    }
+
+    [TestMethod]
+    public void FirstDisplayForStandardEnum_2()
+    {
+        var test = StandardEnum.One;
+        var result = test.GetFirstDisplayName(typeof(StandardEnum));
+        if (result != "CHECK 1")
+        {
+            throw new Exception($"WRONG! ({result})");
+        }
+    }
+
+    [TestMethod]
+    public void EnumerationTest_T()
+    {
+        var test = FlagEnum.One | FlagEnum.Two | FlagEnum.Three;
+        var result = test.EnumerateFlags().ToArray();
+        if (result[0] != FlagEnum.One || result[1] != FlagEnum.Two || result[2] != FlagEnum.Three)
+        {
+            throw new Exception($"WRONG! ({result})");
+        }
+    }
+
+    [TestMethod]
+    public void EnumerationTest()
+    {
+        var test = FlagEnum.One | FlagEnum.Two | FlagEnum.Three;
+        var result = test.EnumerateFlags(test.GetType()).Cast<FlagEnum>().ToArray();
+        if (result[0] != FlagEnum.One || result[1] != FlagEnum.Two || result[2] != FlagEnum.Three)
+        {
+            throw new Exception($"WRONG! ({result})");
+        }
+    }
+
+    [TestMethod]
     public void DisplayForFlagEnumWithCustomSeparator()
     {
         var test = FlagEnum.One | FlagEnum.Two | FlagEnum.Three;
@@ -69,6 +113,69 @@ public class EnumDisplayNameTest
         if (result != "CHECK 1 ABOBA CHECK 2 ABOBA CHECK 3")
         {
             throw new Exception($"WRONG! ({result})");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest1_1()
+    {
+        if (DisplayNameExtensions.CheckEnumIsFlag(typeof(StandardEnum)))
+        {
+            throw new Exception("WRONG!");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest1_2()
+    {
+        if (!DisplayNameExtensions.CheckEnumIsFlag(typeof(FlagEnum)))
+        {
+            throw new Exception("WRONG!");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest2_1()
+    {
+        if (DisplayNameExtensions.CheckEnumIsFlag<StandardEnum>())
+        {
+            throw new Exception("WRONG!");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest2_2()
+    {
+        if (!DisplayNameExtensions.CheckEnumIsFlag<FlagEnum>())
+        {
+            throw new Exception("WRONG!");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest3_1()
+    {
+        if (StandardEnum.One.CheckEnumIsFlag())
+        {
+            throw new Exception("WRONG!");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest3_2()
+    {
+        if (!FlagEnum.One.CheckEnumIsFlag())
+        {
+            throw new Exception("WRONG!");
+        }
+    }
+
+    [TestMethod]
+    public void EnumIsFlagTest3_3()
+    {
+        if (!(FlagEnum.Two | FlagEnum.Three).CheckEnumIsFlag())
+        {
+            throw new Exception("WRONG!");
         }
     }
 }

@@ -36,11 +36,20 @@ public static class DisplayNameExtensions
     public static string? GetDisplayName(this Enum enumValue, string separator = ", ")
     {
         var type = enumValue.GetType();
+        var enums = enumValue.EnumerateFlags(type).Select(x => x.GetFirstDisplayName(type));
+        return string.Join(separator, enums);
+    }
+
+    public static IEnumerable<TEnum> EnumerateFlags<TEnum>(this TEnum enumValue) where TEnum : Enum
+        => enumValue.EnumerateFlags(typeof(TEnum)).Cast<TEnum>();
+
+    public static IEnumerable<Enum> EnumerateFlags(this Enum enumValue, Type type)
+    {
         if (!CheckEnumIsFlag(type))
         {
-            return enumValue.GetFirstDisplayName(type);
+            return [enumValue];
         }
-        return string.Join(separator, Enum.GetValues(type).Cast<Enum>().Where(enumValue.HasFlag).Select(x => x.GetFirstDisplayName(type)));
+        return Enum.GetValues(type).Cast<Enum>().Where(enumValue.HasFlag);
     }
 
     public static string? GetFirstDisplayName(this Enum enumValue)
@@ -66,6 +75,9 @@ public static class DisplayNameExtensions
         }
         return isFlag;
     }
+
+    public static bool CheckEnumIsFlag<TEnum>()
+        => CheckEnumIsFlag(typeof(TEnum));
 
     public static bool CheckEnumIsFlag(this Enum enumValue)
         => CheckEnumIsFlag(enumValue.GetType());
