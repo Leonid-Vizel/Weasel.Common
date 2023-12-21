@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Razor.TagHelpers;
 
-namespace Weasel.Tools.Extensions.Common;
+namespace Weasel.TagHelpers;
 
 public static class TagHelperExtensions
 {
