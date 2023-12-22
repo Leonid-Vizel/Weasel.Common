@@ -12,7 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{82ABFE
 		weasel.png = weasel.png
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weasel.Common.Tests", "Weasel.Common.Tests\Weasel.Common.Tests.csproj", "{1103A907-4365-4CE2-B6A6-AE522BAAC9C1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Weasel.Common.Tests", "Weasel.Common.Tests\Weasel.Common.Tests.csproj", "{1103A907-4365-4CE2-B6A6-AE522BAAC9C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weasel.Tools.Extensions.Session", "Weasel.Tools.Extensions.Session\Weasel.Tools.Extensions.Session.csproj", "{6D8A12D0-D4AA-41C3-86AF-7F94F5CC4200}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{1103A907-4365-4CE2-B6A6-AE522BAAC9C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1103A907-4365-4CE2-B6A6-AE522BAAC9C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1103A907-4365-4CE2-B6A6-AE522BAAC9C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D8A12D0-D4AA-41C3-86AF-7F94F5CC4200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D8A12D0-D4AA-41C3-86AF-7F94F5CC4200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D8A12D0-D4AA-41C3-86AF-7F94F5CC4200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D8A12D0-D4AA-41C3-86AF-7F94F5CC4200}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
