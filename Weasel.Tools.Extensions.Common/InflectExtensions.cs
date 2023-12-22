@@ -16,17 +16,12 @@ public static class InflectExtensions
         {
             return str1;
         }
-        switch (number % 10)
+        return (number % 10) switch
         {
-            case 1:
-                return str2;
-            case 2:
-            case 3:
-            case 4:
-                return str3;
-            default:
-                return str1;
-        }
+            1 => str2,
+            2 or 3 or 4 => str3,
+            _ => str1,
+        };
     }
 
     /// <summary>
