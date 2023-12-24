@@ -18,11 +18,11 @@ public sealed class EnumGroupingAttribute : Attribute
 
 public static class DisplayNameExtensions
 {
-    private static ConcurrentDictionary<Enum, string?> _enumNamesData;
-    private static ConcurrentDictionary<Enum, string[]?> _enumGroupingsData;
-    private static ConcurrentDictionary<Type, bool> _enumFlagData;
-    private static ConcurrentDictionary<(Type, string), string?> _propertyNamesData;
-    private static ConcurrentDictionary<Type, string?> _typeNamesData;
+    private static readonly ConcurrentDictionary<Enum, string?> _enumNamesData;
+    private static readonly ConcurrentDictionary<Enum, string[]?> _enumGroupingsData;
+    private static readonly ConcurrentDictionary<Type, bool> _enumFlagData;
+    private static readonly ConcurrentDictionary<(Type, string), string?> _propertyNamesData;
+    private static readonly ConcurrentDictionary<Type, string?> _typeNamesData;
     static DisplayNameExtensions()
     {
         _enumNamesData = new ConcurrentDictionary<Enum, string?>();
@@ -33,23 +33,30 @@ public static class DisplayNameExtensions
     }
 
     #region Enums
-    public static string? GetDisplayName(this Enum enumValue, string separator = ", ")
+    public static string? GetDisplayName(this Enum enumValue, string separator = ", ", bool includeDefault = false)
     {
         var type = enumValue.GetType();
-        var enums = enumValue.EnumerateFlags(type).Select(x => x.GetFirstDisplayName(type));
+        var enums = enumValue
+            .EnumerateFlags(type, includeDefault)
+            .Select(x => x.GetFirstDisplayName(type));
         return string.Join(separator, enums);
     }
 
-    public static IEnumerable<TEnum> EnumerateFlags<TEnum>(this TEnum enumValue) where TEnum : Enum
-        => enumValue.EnumerateFlags(typeof(TEnum)).Cast<TEnum>();
+    public static IEnumerable<TEnum> EnumerateFlags<TEnum>(this TEnum enumValue, bool includeDefault = false) where TEnum : Enum
+        => enumValue.EnumerateFlags(typeof(TEnum), includeDefault).Cast<TEnum>();
 
-    public static IEnumerable<Enum> EnumerateFlags(this Enum enumValue, Type type)
+    public static IEnumerable<Enum> EnumerateFlags(this Enum enumValue, Type type, bool includeDefault = false)
     {
         if (!CheckEnumIsFlag(type))
         {
             return [enumValue];
         }
-        return Enum.GetValues(type).Cast<Enum>().Where(enumValue.HasFlag);
+        var flags = Enum.GetValues(type).Cast<Enum>().Where(enumValue.HasFlag);
+        if (!includeDefault)
+        {
+            flags = flags.Where(x => Convert.ToInt64(x) != 0);
+        }
+        return flags;
     }
 
     public static string? GetFirstDisplayName(this Enum enumValue)
@@ -140,9 +147,8 @@ public static class DisplayNameExtensions
 
     public static PropertyInfo? GetPropertyInfo<T, TValue>(this Expression<Func<T, TValue>> lambda)
     {
-        UnaryExpression? unaryExpression = lambda.Body as UnaryExpression;
-        MemberExpression? memberExpression = null;
-        if (unaryExpression != null)
+        MemberExpression? memberExpression;
+        if (lambda.Body is UnaryExpression unaryExpression)
         {
             memberExpression = unaryExpression.Operand as MemberExpression;
         }
