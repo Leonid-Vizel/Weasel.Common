@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -18,19 +19,9 @@ public sealed class EnumGroupingAttribute : Attribute
 
 public static class DisplayNameExtensions
 {
-    private static readonly ConcurrentDictionary<Enum, string?> _enumNamesData;
-    private static readonly ConcurrentDictionary<Enum, string[]?> _enumGroupingsData;
-    private static readonly ConcurrentDictionary<Type, bool> _enumFlagData;
-    private static readonly ConcurrentDictionary<(Type, string), string?> _propertyNamesData;
-    private static readonly ConcurrentDictionary<Type, string?> _typeNamesData;
-    static DisplayNameExtensions()
-    {
-        _enumNamesData = new ConcurrentDictionary<Enum, string?>();
-        _enumGroupingsData = new ConcurrentDictionary<Enum, string[]?>();
-        _enumFlagData = new ConcurrentDictionary<Type, bool>();
-        _propertyNamesData = new ConcurrentDictionary<(Type, string), string?>();
-        _typeNamesData = new ConcurrentDictionary<Type, string?>();
-    }
+    private static readonly ConcurrentDictionary<Enum, string?> _enumNamesData = [];
+    private static readonly ConcurrentDictionary<(Type, string), string?> _propertyNamesData = [];
+    private static readonly ConcurrentDictionary<Type, string?> _typeNamesData = [];
 
     #region Enums
     public static string? GetDisplayName(this Enum enumValue, string separator = ", ", bool includeDefault = false)
@@ -42,65 +33,19 @@ public static class DisplayNameExtensions
         return string.Join(separator, enums);
     }
 
-    public static IEnumerable<TEnum> EnumerateFlags<TEnum>(this TEnum enumValue, bool includeDefault = false) where TEnum : Enum
-        => enumValue.EnumerateFlags(typeof(TEnum), includeDefault).Cast<TEnum>();
-
-    public static IEnumerable<Enum> EnumerateFlags(this Enum enumValue, Type type, bool includeDefault = false)
-    {
-        if (!CheckEnumIsFlag(type))
-        {
-            return [enumValue];
-        }
-        var flags = Enum.GetValues(type).Cast<Enum>().Where(enumValue.HasFlag);
-        if (!includeDefault)
-        {
-            flags = flags.Where(x => Convert.ToInt64(x) != 0);
-        }
-        return flags;
-    }
-
     public static string? GetFirstDisplayName(this Enum enumValue)
         => enumValue.GetFirstDisplayName(enumValue.GetType());
 
     public static string? GetFirstDisplayName(this Enum enumValue, Type type)
+        => _enumNamesData.GetOrAdd(enumValue, GetFirstDisplayNameInnerFunction, type);
+    private static string? GetFirstDisplayNameInnerFunction(Enum enumValue, Type type)
     {
-        if (!_enumNamesData.TryGetValue(enumValue, out var result))
-        {
-            var preResult = type.GetMember(enumValue.ToString()).FirstOrDefault(x => x.DeclaringType?.IsEnum ?? false);
-            result = preResult?.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? preResult?.Name;
-            _enumNamesData.TryAdd(enumValue, result);
-        }
-        return result;
-    }
-
-    public static bool CheckEnumIsFlag(Type type)
-    {
-        if (!_enumFlagData.TryGetValue(type, out bool isFlag))
-        {
-            isFlag = type.GetCustomAttribute<FlagsAttribute>() != null;
-            _enumFlagData.TryAdd(type, isFlag);
-        }
-        return isFlag;
-    }
-
-    public static bool CheckEnumIsFlag<TEnum>()
-        => CheckEnumIsFlag(typeof(TEnum));
-
-    public static bool CheckEnumIsFlag(this Enum enumValue)
-        => CheckEnumIsFlag(enumValue.GetType());
-
-    public static string[]? GetGroupings(this Enum enumValue)
-    {
-        if (!_enumGroupingsData.TryGetValue(enumValue, out var result))
-        {
-            result = enumValue.GetType()
-                        .GetMember(enumValue.ToString())
-                        .FirstOrDefault()?
-                        .GetCustomAttribute<EnumGroupingAttribute>()?
-                        .Grouping;
-            _enumGroupingsData.TryAdd(enumValue, result);
-        }
-        return result;
+        var preResult = type
+            .GetMember(enumValue.ToString())
+            .FirstOrDefault(x => x.DeclaringType?.IsEnum ?? false);
+        return preResult?
+            .GetCustomAttribute<DisplayAttribute>()?
+            .GetName() ?? preResult?.Name;
     }
     public static string GetDisplayNameNonNull(this Enum enumValue, string nullValue = "")
         => enumValue.GetDisplayName() ?? nullValue;
@@ -126,23 +71,21 @@ public static class DisplayNameExtensions
         => lambda.GetPropertyInfo()?.GetDisplayName() ?? nullValue;
 
     public static string? GetDisplayName(this Type objType, string propertyName)
+        => _propertyNamesData.GetOrAdd((objType, propertyName), GetDisplayNameInnerFunction);
+    private static string? GetDisplayNameInnerFunction((Type,string) key)
     {
-        var key = (objType, propertyName);
-        if (!_propertyNamesData.TryGetValue(key, out string? name))
+        var objType = key.Item1;
+        var propertyName = key.Item2;
+        var propInfo = objType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+        if (propInfo == null)
         {
-            var propInfo = objType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            propInfo = objType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
             if (propInfo == null)
             {
-                propInfo = objType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-                if (propInfo == null)
-                {
-                    throw new Exception($"Property named {propertyName} not found in {objType.Name}!");
-                }
+                throw new Exception($"Property named {propertyName} not found in {objType.Name}!");
             }
-            name = propInfo.GetDisplayName();
-            _propertyNamesData.TryAdd(key, name);
         }
-        return name;
+        return propInfo.GetDisplayName();
     }
 
     public static PropertyInfo? GetPropertyInfo<T, TValue>(this Expression<Func<T, TValue>> lambda)
@@ -174,13 +117,8 @@ public static class DisplayNameExtensions
         => typeof(T).GetDisplayName();
 
     public static string? GetDisplayName(this Type objType)
-    {
-        if (!_typeNamesData.TryGetValue(objType, out string? name))
-        {
-            name = objType.GetCustomAttributes<DisplayNameAttribute>()?.FirstOrDefault()?.DisplayName;
-            _typeNamesData.TryAdd(objType, name);
-        }
-        return name;
-    }
+        => _typeNamesData.GetOrAdd(objType, GetDisplayNameInnerFunction);
+    private static string? GetDisplayNameInnerFunction(Type type)
+        => type.GetCustomAttributes<DisplayNameAttribute>()?.FirstOrDefault()?.DisplayName;
     #endregion
 }

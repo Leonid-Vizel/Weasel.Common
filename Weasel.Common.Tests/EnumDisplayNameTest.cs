@@ -190,7 +190,7 @@ public class EnumDisplayNameTest
     [TestMethod]
     public void EnumIsFlagTest1_1()
     {
-        if (DisplayNameExtensions.CheckEnumIsFlag(typeof(StandardEnum)))
+        if (EnumExtensions.CheckEnumIsFlag(typeof(StandardEnum)))
         {
             throw new Exception("WRONG!");
         }
@@ -199,7 +199,7 @@ public class EnumDisplayNameTest
     [TestMethod]
     public void EnumIsFlagTest1_2()
     {
-        if (!DisplayNameExtensions.CheckEnumIsFlag(typeof(FlagEnum)))
+        if (!EnumExtensions.CheckEnumIsFlag(typeof(FlagEnum)))
         {
             throw new Exception("WRONG!");
         }
@@ -208,7 +208,7 @@ public class EnumDisplayNameTest
     [TestMethod]
     public void EnumIsFlagTest2_1()
     {
-        if (DisplayNameExtensions.CheckEnumIsFlag<StandardEnum>())
+        if (EnumExtensions.CheckEnumIsFlag<StandardEnum>())
         {
             throw new Exception("WRONG!");
         }
@@ -217,7 +217,7 @@ public class EnumDisplayNameTest
     [TestMethod]
     public void EnumIsFlagTest2_2()
     {
-        if (!DisplayNameExtensions.CheckEnumIsFlag<FlagEnum>())
+        if (!EnumExtensions.CheckEnumIsFlag<FlagEnum>())
         {
             throw new Exception("WRONG!");
         }
