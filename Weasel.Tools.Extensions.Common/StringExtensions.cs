@@ -4,6 +4,19 @@ namespace Weasel.Tools.Extensions.Common;
 
 public static class StringExtensions
 {
+    public static string? Shorten(this string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return null;
+        }
+        if (value.Length < maxLength)
+        {
+            return value;
+        }
+        return value.Substring(0, maxLength);
+    }
+
     public static string? EnsureFirstUpper(this string? value)
         => string.IsNullOrEmpty(value) ? value : EnsureFirstUpperNonNull(value);
 
